@@ -11,7 +11,9 @@
 
 <h1> <b> Welcome to the Stock Tool</b></h1>
 <br/>
-<input type="text" id="stockname"> Stock Name </input>
+<input list="search tool" id="search bar">
+<datalist name ="searh" id="search tool">
+</datalist>
 <br/>
 
 <button id="go" > enter  </button>
@@ -26,12 +28,6 @@
     <option value=1826>5 Years</option>
     <option value=3625>10 Years</option>
 </select>
-
-<br/>
-<input list="search tool" id="search bar">
-<datalist name ="searh" id="search tool">
-</datalist>
-<br/>
 
 <body>
 
@@ -88,6 +84,8 @@ function removeOptions(selectbox)
     var selectmenu = document.getElementById("Time Period Input");
     var datalength = selectmenu.options[selectmenu.selectedIndex].value;
     selectmenu= length_of_ouput(datalength);
+    console.log(datalength);
+    console.log(selectmenu);
 
     var key = "32QMUO3CUW1PD4LI";
     var url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=" + stockName +"&outputsize=" + selectmenu + "&apikey=" + key;
