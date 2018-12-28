@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Index</title>
+    <script src="script.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href = "style.css">
+</head>
+
+<h1> <b> Welcome to the Stock Tool</b></h1>
+<br/>
+<input type="text" id="stockname"> Stock Name </input>
+<br/>
+
+<button id="go" > enter  </button>
+
+<select name="Time Period" id="Time Period Input">
+    <option value="compact">Compact </option>
+    <option value="full">Full</option>
+    <option value=31>1 Month</option>
+    <option value=93>3 Months</option>
+    <option value=365>1 Year</option>
+    <option value=1095>3 Years</option>
+    <option value=1826>5 Years</option>
+    <option value=3625>10 Years</option>
+</select>
+
+<br/>
+<input list="search tool" id="search bar">
+<datalist name ="searh" id="search tool">
+</datalist>
+<br/>
+
+<body>
+
+<div class="stock_container">
+    <p class="symbol"> Ticker: </p>
+    <p class = "date">Most Recent Date:</p>
+    <p class="open_price" > Open price: </p>
+    <p class="close_price">Close Price:</p>
+ </div>
+
+<div id="myDiv"></div>
+</body>
+
+<script>//search tool
+var searchBar= document.getElementById("search bar");
+var searchlist = document.getElementById("search tool");
+removeOptions(searchlist);
+searchBar.addEventListener("keyup", function(){
+  var key = "32QMUO3CUW1PD4LI";
+  var current_input = searchBar.value;
+  var url = "https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=" + current_input + " &apikey=" + key;
+  if(current_input != "") {
+    $.getJSON(url, function (data) {
+      var str = '';
+      for (i = 0; i < 4; i++) {
+        var name = data['bestMatches'][i]['2. name'];
+        var symb = data['bestMatches'][i]['1. symbol'];
+        str += '<option value="' + symb + '" >' + name + '</option>';
+      }
+      searchlist.innerHTML = str;
+    })
+  }
+});
+//  var newOption = document.createElement("option");
+//   newOption.value = data['bestMatches'][i]['1. symbol'];
+//     newOption.innerHTML = data['bestMatches'][i]['2. name'];
+function removeOptions(selectbox)
+{
+  var i;
+  for(i = selectbox.options.length - 1 ; i >= 0 ; i--)
+  {
+    selectbox.remove(i);
+  }
+}
+
+
+</script>
+
+<script>
+  $("#go").click(function () {
+        var myArray = [];
+        var x_arr=[];
+    var stockName = document.getElementById("search bar").value;
+    var selectmenu = document.getElementById("Time Period Input");
+    var datalength = selectmenu.options[selectmenu.selectedIndex].value;
+    selectmenu= length_of_ouput(datalength);
+
+    var key = "32QMUO3CUW1PD4LI";
+    var url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=" + stockName +"&outputsize=" + selectmenu + "&apikey=" + key;
+    console.log(url);
+        $.getJSON(url, function (data) {//gets JSON from the API server
+            //if(data=="ERROR") {alert("pls enter a valid stock name" ;}
+            var symbol = stockName;
+            var lastRefreshed = data['Meta Data']['3. Last Refreshed'];
+                var lastTradePrice = data['Time Series (Daily)']['2018-12-24']['4. close'];
+                var OpenTrade = data['Time Series (Daily)']['2018-12-24']['1. open'];
+
+                var retArr=object_parser(data,datalength);
+                myArray=retArr[0];
+                x_arr=retArr[1];
+                  console.log(myArray.toString());
+
+          $(".date").append(lastRefreshed);
+            $(".open_price").append(OpenTrade);
+            $(".close_price").append(lastTradePrice);
+            $(".symbol").append(symbol.toUpperCase());
+
+            plot_graph(x_arr, myArray,symbol);
+        })
+  })
+
+
+function plot_graph(x_arr, y_arr, ticker) {
+  var trace1 = {
+    x: x_arr,
+    y: y_arr,
+    type: 'scatter',
+  };
+
+  var layout = {
+    title: ticker.toUpperCase() + " Closing Prices"
+  };
+
+  var graph = [trace1];
+
+  Plotly.newPlot('myDiv', graph, layout);
+
+}
+
+function length_of_ouput(datalength) {
+  if(datalength === "compact"){
+    return("compact");
+  }
+  else if(datalength==31){
+    return("compact");
+  }
+  else if(datalength==93){
+    return("compact");
+  }
+  else{
+    return("full");
+  }
+}
+
+function object_parser(data,desired_length){
+  var datapts=0;
+  var x_coord=[];
+  var y_coord=[];
+  for(firstArr in data){
+    for( secondArr in data[firstArr]){
+      var pushCounter=1;
+      for(thirdArr in data[firstArr][secondArr]){
+        if(!isNaN(data[firstArr][secondArr][thirdArr])&& data[firstArr][secondArr][thirdArr]>10 && pushCounter==4 ){
+          y_coord.push(data[firstArr][secondArr][thirdArr]);
+          x_coord.push(secondArr);
+          pushCounter=1;
+          datapts++;
+        }
+        if(datapts==desired_length){
+          break;
+        }
+        pushCounter++;
+      }
+    }
+  }
+
+  return([
+    y_coord,
+    x_coord
+
+  ])
+  ;
+}
+
+
+
+</script>
+</html>
