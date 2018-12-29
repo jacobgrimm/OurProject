@@ -18,14 +18,14 @@
 <button id="go" > enter  </button>
 
 <select name="Time Period" id="Time Period Input">
-    <option value="1d">1 Day </option>
+    <option value="ytd">Year-to-Date</option>
     <option value="1m">1 Month</option>
     <option value="3m">3 Months</option>
     <option value="6m">6 Months</option>
-    <option value="ytd">Year-to-Date</option>
     <option value="1y">1 Year</option>
     <option value="2y">2 Years</option>
     <option value="5y">5 Years</option>
+    <option value="1d">1 Day </option>
 </select>
 
 <body>
@@ -40,6 +40,7 @@
     <p class="high"> 52 Week High: </p>
     <p class="low"> 52 Week Low: </p>
     <p class = "ptoe"> P/E: </p>
+    <p class = "icon"> </p>
  </div>
 
 <div id="myDiv"></div>
@@ -88,7 +89,7 @@ function removeOptions(selectbox)
     var selectmenu = document.getElementById("Time Period Input");
     var datalength = selectmenu.options[selectmenu.selectedIndex].value;
 
-    var url = "https://api.iextrading.com/1.0/stock/" +stockName + "/batch?types=quote,news,chart&range="+datalength;
+    var url = "https://api.iextrading.com/1.0/stock/" +stockName + "/batch?types=quote,news,chart,earnings&range="+datalength;
     console.log(url);
         $.getJSON(url, function (data) {//gets JSON from the API server
             //if(data=="ERROR") {alert("pls enter a valid stock name" ;}
@@ -116,6 +117,8 @@ function removeOptions(selectbox)
             $(".high").append(high);
             $(".low").append(low);
             $(".ptoe").append(pToE);
+
+            earnings_growth(data['earnings'], pToE);
 
 
 
@@ -167,6 +170,31 @@ else {
   ])
   ;
 }
+
+function earnings_growth(data, pE){//function to calculate the Earnings growth over the given period
+      var year1 = [];
+      var year2 =[]
+      for(i=0; i<4; i++){
+          year1.push(data['earnings'][i]['actualEPS']);
+          year2.push(data['earnings'][i]['yearAgo']);
+      }
+        egr = year1.concat(year2);
+      console.log(egr.toString());
+      var pegs= [];
+
+    for(x = 1;x<egr.length;x++) {
+           pegs.push(((((egr[x-1]/egr[x])-1)*100)));
+    }
+
+
+    for(i=0; i<pegs.length; i++){
+            pegs[i]= (pE/pegs[i]);
+        }
+
+        return pegs;
+}
+
+
 
 
 
