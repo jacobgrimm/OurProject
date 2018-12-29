@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Index</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href = "style.css">
+</head>
+
+<h1> <b> Welcome to the Stock Tool</b></h1>
+<br/>
+<input list="search tool" id="search bar">
+<datalist name ="searh" id="search tool">
+</datalist>
+<br/>
+
+<button id="go" > enter  </button>
+
+<select name="Time Period" id="Time Period Input">
+    <option value="1d">1 Day </option>
+    <option value="1m">1 Month</option>
+    <option value="3m">3 Months</option>
+    <option value="6m">6 Months</option>
+    <option value="ytd">Year-to-Date</option>
+    <option value="1y">1 Year</option>
+    <option value="2y">2 Years</option>
+    <option value="5y">5 Years</option>
+</select>
+
+<body>
+
+<div class="stock_container">
+    <p class="symbol"> Ticker: </p>
+    <p class="company"> Company: </p>
+    <p class="sector "> Sector: </p>
+    <p class = "date"> Most Recent Date: </p>
+    <p class="open_price" > Daily Open price: </p>
+    <p class="close_price"> Daily Close Price: </p>
+    <p class="high"> 52 Week High: </p>
+    <p class="low"> 52 Week Low: </p>
+    <p class = "ptoe"> P/E: </p>
+ </div>
+
+<div id="myDiv"></div>
+</body>
+
+<script>//search tool
+var searchBar= document.getElementById("search bar");
+var searchlist = document.getElementById("search tool");
+removeOptions(searchlist);
+searchBar.addEventListener("keyup", function(){
+  var key = "32QMUO3CUW1PD4LI";
+  var current_input = searchBar.value;
+  var url = "https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=" + current_input + " &apikey=" + key;
+  if(current_input != "") {
+    $.getJSON(url, function (data) {
+      var str = '';
+      for (i = 0; i < 4; i++) {
+        var name = data['bestMatches'][i]['2. name'];
+        var symb = data['bestMatches'][i]['1. symbol'];
+        str += '<option value="' + symb + '" >' + name + '</option>';
+      }
+      searchlist.innerHTML = str;
+    })
+  }
+});
+//  var newOption = document.createElement("option");
+//   newOption.value = data['bestMatches'][i]['1. symbol'];
+//     newOption.innerHTML = data['bestMatches'][i]['2. name'];
+function removeOptions(selectbox)
+{
+  var i;
+  for(i = selectbox.options.length - 1 ; i >= 0 ; i--)
+  {
+    selectbox.remove(i);
+  }
+}
+
+
+</script>
+
+<script>
+  $("#go").click(function () {
+        var myArray = [];
+        var x_arr=[];
+    var stockName = document.getElementById("search bar").value;
+    var selectmenu = document.getElementById("Time Period Input");
+    var datalength = selectmenu.options[selectmenu.selectedIndex].value;
+
+    var url = "https://api.iextrading.com/1.0/stock/" +stockName + "/batch?types=quote,news,chart&range="+datalength;
+    console.log(url);
+        $.getJSON(url, function (data) {//gets JSON from the API server
+            //if(data=="ERROR") {alert("pls enter a valid stock name" ;}
+            var symbol = stockName;
+            console.log(data);
+            var lastRefreshed = data['quote']['latestTime'];
+                var lastTradePrice = data['quote']['close'];
+                var OpenTrade = data['quote']['open'];
+                var company = data['quote']['companyName'];
+                var high = data['quote']['week52High'];
+                var low = data['quote']['week52Low'];
+                var pToE = data['quote']['peRatio'];
+                var sector = data['quote']['sector'];
+
+                var retArr=object_parser(data,datalength);
+                myArray=retArr[0];
+                x_arr=retArr[1];
+
+          $(".date").append(lastRefreshed);
+            $(".open_price").append(OpenTrade);
+            $(".close_price").append(lastTradePrice);
+            $(".symbol").append(symbol.toUpperCase());
+            $(".company").append(company);
+            $(".sector").append(sector);
+            $(".high").append(high);
+            $(".low").append(low);
+            $(".ptoe").append(pToE);
+
+
+
+            plot_graph(x_arr, myArray,symbol);
+        })
+
+  })
+
+
+function plot_graph(x_arr, y_arr, ticker) {
+  var trace1 = {
+    x: x_arr,
+    y: y_arr,
+    type: 'scatter',
+  };
+
+  var layout = {
+    title: ticker.toUpperCase() + " Closing Prices"
+  };
+
+  var graph = [trace1];
+
+  Plotly.newPlot('myDiv', graph, layout);
+
+}
+
+
+function object_parser(data,desired_length){
+  var datapts=0;
+  var x_coord=[];
+  var y_coord=[];
+  if(desired_length==="1d"){
+      for(i in data["chart"]){
+          x_coord.push(data["chart"][i]["label"]);
+          y_coord.push(data["chart"][i]["close"]);
+      }
+
+  }
+else {
+      for (i in data["chart"]) {
+          x_coord.push(data["chart"][i]["date"]);
+          y_coord.push(data["chart"][i]["close"]);
+      }
+  }
+    return([
+    y_coord,
+    x_coord
+
+  ])
+  ;
+}
+
+
+
+</script>
+</html>
