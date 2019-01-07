@@ -18,11 +18,11 @@
 <button id="go" > enter  </button>
 
 <select name="Time Period" id="Time Period Input">
+    <option value="1y">1 Year</option>
     <option value="ytd">Year-to-Date</option>
     <option value="1m">1 Month</option>
     <option value="3m">3 Months</option>
     <option value="6m">6 Months</option>
-    <option value="1y">1 Year</option>
     <option value="2y">2 Years</option>
     <option value="5y">5 Years</option>
     <option value="1d">1 Day </option>
@@ -31,16 +31,16 @@
 <body>
 
 <div class="stock_container">
-    <p class="symbol"> Ticker: </p>
-    <p class="company"> Company: </p>
-    <p class="sector "> Sector: </p>
-    <p class = "date"> Most Recent Date: </p>
-    <p class="open_price" > Daily Open price: </p>
-    <p class="close_price"> Daily Close Price: </p>
-    <p class="high"> 52 Week High: </p>
-    <p class="low"> 52 Week Low: </p>
-    <p class = "ptoe"> P/E: </p>
-    <p class = "icon"> </p>
+    <p id="symbol">  </p>
+    <p id="company">  </p>
+    <p id="sector"> </p>
+    <p id = "date"> </p>
+    <p id="open_price" > </p>
+    <p id="close_price"> </p>
+    <p id="high">  </p>
+    <p id="low">  </p>
+    <p id = "ptoe">  </p>
+    <p id = "icon"> </p>
  </div>
 
 <div id="myDiv"></div>
@@ -55,15 +55,21 @@ searchBar.addEventListener("keyup", function(){
   var current_input = searchBar.value;
   var url = "https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=" + current_input + " &apikey=" + key;
   if(current_input != "") {
-    $.getJSON(url, function (data) {
-      var str = '';
-      for (i = 0; i < 4; i++) {
-        var name = data['bestMatches'][i]['2. name'];
-        var symb = data['bestMatches'][i]['1. symbol'];
-        str += '<option value="' + symb + '" >' + name + '</option>';
+      try {
+          $.getJSON(url, function (data) {
+              var str = '';
+              for (i = 0; i < 4; i++) {
+                  var name = data['bestMatches'][i]['2. name'];
+                  var symb = data['bestMatches'][i]['1. symbol'];
+                  str += '<option value="' + symb + '" >' + name + '</option>';
+              }
+              searchlist.innerHTML = str;
+          })
       }
-      searchlist.innerHTML = str;
-    })
+      catch (e) {
+            console.log("Access Denied from API")
+      }
+
   }
 });
 //  var newOption = document.createElement("option");
@@ -89,13 +95,14 @@ function removeOptions(selectbox)
     var selectmenu = document.getElementById("Time Period Input");
     var datalength = selectmenu.options[selectmenu.selectedIndex].value;
 
-    var url = "https://api.iextrading.com/1.0/stock/" +stockName + "/batch?types=quote,news,chart,earnings&range="+datalength;
-    console.log(url);
-        $.getJSON(url, function (data) {//gets JSON from the API server
-            //if(data=="ERROR") {alert("pls enter a valid stock name" ;}
-            var symbol = stockName;
-            console.log(data);
-            var lastRefreshed = data['quote']['latestTime'];
+    var url = "https://api.iextrading.com/1.0/stock/" +stockName + "/batch?types=quote,news,chart,stats,financials,earnings&range="+datalength;
+    var fiveYrfinances ="https://api.iextrading.com/1.0/stock/" + stockName+ "/financials?period=annual";
+        try {
+            $.getJSON(url, function (data) {//gets JSON from the API server
+                //if(data=="ERROR") {alert("pls enter a valid stock name" ;}
+                var symbol = stockName;
+                console.log(data);
+                var lastRefreshed = data['quote']['latestTime'];
                 var lastTradePrice = data['quote']['close'];
                 var OpenTrade = data['quote']['open'];
                 var company = data['quote']['companyName'];
@@ -103,27 +110,38 @@ function removeOptions(selectbox)
                 var low = data['quote']['week52Low'];
                 var pToE = data['quote']['peRatio'];
                 var sector = data['quote']['sector'];
+                var finance = financial_ratios(data['financials']);
+                $.getJSON(fiveYrfinances, function (annualdata) {
+                    console.log(annualdata);
+                    var longTermfinance = financial_ratios(annualdata['financials']['financials']);
 
-                var retArr=object_parser(data,datalength);
-                myArray=retArr[0];
-                x_arr=retArr[1];
-
-          $(".date").append(lastRefreshed);
-            $(".open_price").append(OpenTrade);
-            $(".close_price").append(lastTradePrice);
-            $(".symbol").append(symbol.toUpperCase());
-            $(".company").append(company);
-            $(".sector").append(sector);
-            $(".high").append(high);
-            $(".low").append(low);
-            $(".ptoe").append(pToE);
-
-            earnings_growth(data['earnings'], pToE);
+                })
+                var retArr = object_parser(data, datalength);
+                var divYield = stats(data['stats']);
+                myArray = retArr[0];
+                x_arr = retArr[1];
 
 
+                document.getElementById("date").innerHTML = "Most Recent Date" + lastRefreshed;        //$(".date").append(lastRefreshed);
+                document.getElementById('open_price').innerHTML= "Open Price: " + OpenTrade;
+                document.getElementById('close_price').innerHTML= "Close Price: " + lastTradePrice;
+                document.getElementById("symbol").innerHTML = "Symbol: " + symbol;
+                document.getElementById('company').innerHTML= "Company: " + company;
+                document.getElementById("sector").innerHTML = "Sector: " + sector;
+                document.getElementById("high").innerHTML = "52 Week High: " + high;
+                document.getElementById('low').innerHTML= "52 Week Low: " + low;
+                document.getElementById("ptoe").innerHTML = "ptoe: " + pToE;
 
-            plot_graph(x_arr, myArray,symbol);
-        })
+                earnings_growth(data['earnings'], pToE);
+
+
+                plot_graph(x_arr, myArray, symbol);
+            })
+        }
+        catch (e) {
+            alert("Please enter a valid Stock Ticker");
+
+        }
 
   })
 
@@ -194,7 +212,37 @@ function earnings_growth(data, pE){//function to calculate the Earnings growth o
         return pegs;
 }
 
+function financial_ratios(data){
+     // for(i in data) {
+    let i =0;
+        data=data['financials'];
+        console.log(data);
+          var grossMargin = (data[i]['grossProfit'] / data[i]['totalRevenue']);
+          var netMargin = (data[i]['netIncome'] / data[i]['totalRevenue']);
+          var debtToEquity = (data[i]['totalLiabilities'] / data[i]['shareholderEquity']);
+          var revGrowth =((data[i]['totalRevenue']-data[data.length-1]['totalRevenue'])/(data[data.length-1]['totalRevenue']))*100;
+      //}
 
+      return ([
+          grossMargin,
+          netMargin,
+          debtToEquity,
+          revGrowth
+      ]);
+
+
+
+  }
+
+function stats(data) {
+      return([
+          data['dividendYield'],
+
+
+      ])
+
+
+}
 
 
 
