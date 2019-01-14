@@ -97,6 +97,7 @@ function removeOptions(selectbox)
 
     var url = "https://api.iextrading.com/1.0/stock/" +stockName + "/batch?types=quote,news,chart,stats,financials,earnings&range="+datalength;
     var fiveYrfinances ="https://api.iextrading.com/1.0/stock/" + stockName+ "/financials?period=annual";
+    console.log(fiveYrfinances);
         try {
             $.getJSON(url, function (data) {//gets JSON from the API server
                 //if(data=="ERROR") {alert("pls enter a valid stock name" ;}
@@ -110,17 +111,17 @@ function removeOptions(selectbox)
                 var low = data['quote']['week52Low'];
                 var pToE = data['quote']['peRatio'];
                 var sector = data['quote']['sector'];
-                var finance = financial_ratios(data['financials']);
+                var finance = financial_ratios(data['financials']['financials']);
                 $.getJSON(fiveYrfinances, function (annualdata) {
-                    console.log(annualdata);
-                    var longTermfinance = financial_ratios(annualdata['financials']['financials']);
+                    var longTermfinance = financial_ratios(annualdata['financials']);
+                    document.getElementById("5yrRev").innerHTML = "5 Year Rev. Growth: " + longTermfinance[3];        //$(".date").append(lastRefreshed);
 
-                })
-                var retArr = object_parser(data, datalength);
+                });
+
+                var retArr = chart_to_array(data, datalength);
                 var divYield = stats(data['stats']);
                 myArray = retArr[0];
                 x_arr = retArr[1];
-
 
                 document.getElementById("date").innerHTML = "Most Recent Date" + lastRefreshed;        //$(".date").append(lastRefreshed);
                 document.getElementById('open_price').innerHTML= "Open Price: " + OpenTrade;
@@ -132,10 +133,24 @@ function removeOptions(selectbox)
                 document.getElementById('low').innerHTML= "52 Week Low: " + low;
                 document.getElementById("ptoe").innerHTML = "ptoe: " + pToE;
 
-                earnings_growth(data['earnings'], pToE);
+             var PeGs = earnings_growth(data['earnings'], pToE);
 
 
                 plot_graph(x_arr, myArray, symbol);
+
+                document.getElementById("5yrRev").innerHTML = "5 Year Rev. Growth: " ;        //$(".date").append(lastRefreshed);
+                document.getElementById('1yrRev').innerHTML= "1 Year Rev. Growth: " + finance[3];
+                document.getElementById('GrossMarg').innerHTML= "Gross Margin: " + finance[0];
+                document.getElementById("NetMarg").innerHTML = "Net Margin: " + finance[1];
+                document.getElementById('DebtToEquity').innerHTML= "Debt To Equity: " + finance[2];
+                document.getElementById("CurrentRatio").innerHTML = "Current Ratio: " ;
+                document.getElementById("ReturnOnE").innerHTML = "Return on Equity: " ;
+                document.getElementById('NormalizedPe').innerHTML= "Normalized P/E: " ;
+                document.getElementById("CurrentYield").innerHTML = "Current Yield: " + divYield;
+                document.getElementById("DivGrowth").innerHTML = "Dividend Growth: " ;
+                document.getElementById("ptoEgrowth").innerHTML = "P/E Growth: " + PeGs[0].toFixed(2);
+
+
             })
         }
         catch (e) {
@@ -143,7 +158,7 @@ function removeOptions(selectbox)
 
         }
 
-  })
+  });
 
 
 function plot_graph(x_arr, y_arr, ticker) {
@@ -164,7 +179,7 @@ function plot_graph(x_arr, y_arr, ticker) {
 }
 
 
-function object_parser(data,desired_length){
+function chart_to_array(data,desired_length){
   var datapts=0;
   var x_coord=[];
   var y_coord=[];
@@ -215,7 +230,6 @@ function earnings_growth(data, pE){//function to calculate the Earnings growth o
 function financial_ratios(data){
      // for(i in data) {
     let i =0;
-        data=data['financials'];
         console.log(data);
           var grossMargin = (data[i]['grossProfit'] / data[i]['totalRevenue']);
           var netMargin = (data[i]['netIncome'] / data[i]['totalRevenue']);
@@ -237,14 +251,28 @@ function financial_ratios(data){
 function stats(data) {
       return([
           data['dividendYield'],
-
-
       ])
-
-
 }
 
 
-
 </script>
+
+<div class="Important Info">
+    <p id="5yrRev">  </p>
+    <p id="1yrRev">  </p>
+    <p id="GrossMarg"> </p>
+    <p id = "NetMarg"> </p>
+    <p id="DebtToEquity" > </p>
+    <p id="CurrentRatio"> </p>
+    <p id="ReturnOnE">  </p>
+    <p id="NormalizedPe">  </p>
+    <p id = "CurrentYield">  </p>
+    <p id = "DivGrowth"> </p>
+</div>
+<div class="interesting">
+    <p id="ptoEgrowth">  </p>
+</div>
+
+
+
 </html>
