@@ -102,6 +102,7 @@ body {
   </div>
   <div class="column middle" style="background-color:#bbb;">
 	<div id="myDiv"></div>
+      <div id="myDiv2"></div>
   </div>
   <div class="column side" style="background-color:#ccc;">
 	<p id="5yrRev">  </p>
@@ -109,9 +110,9 @@ body {
     <p id="GrossMarg"> </p>
     <p id = "NetMarg"> </p>
     <p id="DebtToEquity" > </p>
-    <p id="CurrentRatio"> </p>
+    <p id="shortRatio"> </p>
     <p id="ReturnOnE">  </p>
-    <p id="NormalizedPe">  </p>
+    <p id="institution">  </p>
     <p id = "CurrentYield">  </p>
     <p id = "DivGrowth"> </p>
 	<p id="ptoEgrowth">  </p>
@@ -197,9 +198,10 @@ function removeOptions(selectbox)
                 });
 
                 var retArr = chart_to_array(data, datalength);
-                var divYield = stats(data['stats']);
+                var statistics = stats(data['stats']);
                 myArray = retArr[0];
                 x_arr = retArr[1];
+                var vol = retArr[2];
                 document.getElementById("date").innerHTML = "Most Recent Date" + lastRefreshed;        //$(".date").append(lastRefreshed);
                 document.getElementById('open_price').innerHTML= "Open Price: " + OpenTrade;
                 document.getElementById('close_price').innerHTML= "Close Price: " + lastTradePrice;
@@ -213,16 +215,16 @@ function removeOptions(selectbox)
              var PeGs = earnings_growth(data['earnings'], pToE);
 
 
-                plot_graph(x_arr, myArray, symbol);
+                plot_graph(x_arr, myArray, symbol, vol);
 
                 document.getElementById('1yrRev').innerHTML= "1 Year Rev. Growth: " + finance[3];
                 document.getElementById('GrossMarg').innerHTML= "Gross Margin: " + finance[0];
                 document.getElementById("NetMarg").innerHTML = "Net Margin: " + finance[1];
                 document.getElementById('DebtToEquity').innerHTML= "Debt To Equity: " + finance[2];
-                document.getElementById("CurrentRatio").innerHTML = "Current Ratio: " ;
-                document.getElementById("ReturnOnE").innerHTML = "Return on Equity: " ;
-                document.getElementById('NormalizedPe').innerHTML= "Normalized P/E: " ;
-                document.getElementById("CurrentYield").innerHTML = "Current Yield: " + divYield;
+                document.getElementById("shortRatio").innerHTML = "Short Interest Ratio: " + statistics[2] ;
+                document.getElementById("ReturnOnE").innerHTML = "Return on Equity: " + statistics[3] ;
+                document.getElementById('institution').innerHTML= "Institutional Ownership: " + statistics[1] ;
+                document.getElementById("CurrentYield").innerHTML = "Current Yield: " + statistics[0];
                 document.getElementById("DivGrowth").innerHTML = "Dividend Growth: " + div_growth(stockName) ;
                 document.getElementById("ptoEgrowth").innerHTML = "P/E Growth: " + PeGs.toFixed(2);
 
@@ -236,32 +238,54 @@ function removeOptions(selectbox)
   });
 
 
-function plot_graph(x_arr, y_arr, ticker) {
-  var trace1 = {
-    x: x_arr,
-    y: y_arr,
-    type: 'scatter',
-  };
+  function plot_graph(x_arr, y_arr, ticker, volume) {
+      var trace1 = {
+          x: x_arr,
+          y: y_arr,
+          type: 'scatter',
+          connectgaps : true
+      };
 
-  var layout = {
-    title: ticker.toUpperCase() + " Closing Prices"
-  };
+      var layout = {
+          title: ticker.toUpperCase() + " Closing Prices"
+      };
 
-  var graph = [trace1];
+      var graph = [trace1];
 
-  Plotly.newPlot('myDiv', graph, layout);
+      Plotly.newPlot('myDiv', graph, layout);
 
-}
+      var trace2 = {
+          x: x_arr,
+          y: volume,
+          type: 'scatter',
+          connectgaps : true
+      };
+
+      var layout = {
+          title: ticker.toUpperCase() + " Volume"
+      };
+
+      var graph2 = [trace2];
+
+      Plotly.newPlot('myDiv2', graph2, layout);
+
+
+
+  }
+
 
 
 function chart_to_array(data,desired_length){
   var datapts=0;
   var x_coord=[];
   var y_coord=[];
-  if(desired_length==="1d"){
+  var volume=[];
+
+    if(desired_length==="1d"){
       for(i in data["chart"]){
           x_coord.push(data["chart"][i]["label"]);
           y_coord.push(data["chart"][i]["close"]);
+          volume.push(data["chart"][i]["volume"]);
       }
 
   }
@@ -269,11 +293,13 @@ else {
       for (i in data["chart"]) {
           x_coord.push(data["chart"][i]["date"]);
           y_coord.push(data["chart"][i]["close"]);
+          volume.push(data["chart"][i]["volume"]);
       }
   }
     return([
     y_coord,
-    x_coord
+    x_coord,
+    volume
 
   ])
   ;
@@ -328,6 +354,9 @@ function financial_ratios(data){
 function stats(data) {
       return([
           data['dividendYield'],
+          data['institutionPercent'],
+          data['shortRatio'],
+          data['returnOnEquity']
       ])
 }
 
@@ -354,8 +383,6 @@ function div_growth(name) {
         return gRowth;
 
     })
-
-
 }
 
 </script>
