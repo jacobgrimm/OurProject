@@ -7,8 +7,65 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="stylesheet" href = "style.css">
 </head>
+<style>
+* {
+  box-sizing: border-box;
+}
 
-<h1> <b> Welcome to the Stock Tool</b></h1>
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Style the header */
+.header {
+  background-color: #f1f1f1;
+  padding: 30px;
+  text-align: center;
+  font-size: 24px;
+}
+
+/* Create three unequal columns that floats next to each other */
+.column {
+  float: left;
+  padding: 10px;
+}
+
+/* Left and right column */
+.column.side {
+  width: 25%;
+}
+
+/* Middle column */
+.column.middle {
+  width: 50%;
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Style the footer */
+.footer {
+  background-color: #f1f1f1;
+  padding: 10px;
+  text-align: center;
+}
+
+/* Responsive layout - makes the three columns stack on top of each other instead of next to each other */
+@media (max-width: 600px) {
+  .column.side, .column.middle {
+    width: 100%;
+  }
+}
+</style>
+
+<div class="header">
+  <h2>Stock Analysis Tool</h2>
+  <p>Created by Rish Bhatnagar and Jacob Grimm.</p>
+</div>
 <br/>
 <input list="search tool" id="search bar">
 <datalist name ="searh" id="search tool">
@@ -30,8 +87,9 @@
 
 <body>
 
-<div class="stock_container">
-    <p id="symbol">  </p>
+<div class="row">
+  <div class="column side" style="background-color:#aaa;">
+  	<p id="symbol">  </p>
     <p id="company">  </p>
     <p id="sector"> </p>
     <p id = "date"> </p>
@@ -41,9 +99,29 @@
     <p id="low">  </p>
     <p id = "ptoe">  </p>
     <p id = "icon"> </p>
- </div>
+  </div>
+  <div class="column middle" style="background-color:#bbb;">
+	<div id="myDiv"></div>
+  </div>
+  <div class="column side" style="background-color:#ccc;">
+	<p id="5yrRev">  </p>
+    <p id="1yrRev">  </p>
+    <p id="GrossMarg"> </p>
+    <p id = "NetMarg"> </p>
+    <p id="DebtToEquity" > </p>
+    <p id="CurrentRatio"> </p>
+    <p id="ReturnOnE">  </p>
+    <p id="NormalizedPe">  </p>
+    <p id = "CurrentYield">  </p>
+    <p id = "DivGrowth"> </p>
+	<p id="ptoEgrowth">  </p>
+  </div>
+</div>
 
-<div id="myDiv"></div>
+<div class="footer">
+  <button class="evaluation" onclick="document.getElementById('ticketModal').style.display='block'">See our Evaluation!</button>
+</div>
+
 </body>
 
 <script>//search tool
@@ -130,7 +208,7 @@ function removeOptions(selectbox)
                 document.getElementById("sector").innerHTML = "Sector: " + sector;
                 document.getElementById("high").innerHTML = "52 Week High: " + high;
                 document.getElementById('low').innerHTML= "52 Week Low: " + low;
-                document.getElementById("ptoe").innerHTML = "ptoe: " + pToE;
+                document.getElementById("ptoe").innerHTML = "P/E Ratio: " + pToE;
 
              var PeGs = earnings_growth(data['earnings'], pToE);
 
@@ -282,21 +360,7 @@ function div_growth(name) {
 
 </script>
 
-<div class="Important Info">
-    <p id="5yrRev">  </p>
-    <p id="1yrRev">  </p>
-    <p id="GrossMarg"> </p>
-    <p id = "NetMarg"> </p>
-    <p id="DebtToEquity" > </p>
-    <p id="CurrentRatio"> </p>
-    <p id="ReturnOnE">  </p>
-    <p id="NormalizedPe">  </p>
-    <p id = "CurrentYield">  </p>
-    <p id = "DivGrowth"> </p>
-</div>
-<div class="interesting">
-    <p id="ptoEgrowth">  </p>
-</div>
+
 
 
 
