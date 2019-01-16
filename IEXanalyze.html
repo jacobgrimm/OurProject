@@ -221,11 +221,12 @@ function removeOptions(selectbox)
                 document.getElementById('GrossMarg').innerHTML= "Gross Margin: " + finance[0];
                 document.getElementById("NetMarg").innerHTML = "Net Margin: " + finance[1];
                 document.getElementById('DebtToEquity').innerHTML= "Debt To Equity: " + finance[2];
-                document.getElementById("shortRatio").innerHTML = "Short Interest Ratio: " + statistics[2] ;
+                if(statistics[2]!=null){
+                document.getElementById("shortRatio").innerHTML = "Short Interest Ratio: " + statistics[2] ;}
                 document.getElementById("ReturnOnE").innerHTML = "Return on Equity: " + statistics[3] ;
                 document.getElementById('institution').innerHTML= "Institutional Ownership: " + statistics[1] ;
                 document.getElementById("CurrentYield").innerHTML = "Current Yield: " + statistics[0];
-                document.getElementById("DivGrowth").innerHTML = "Dividend Growth: " + div_growth(stockName) ;
+                div_growth(stockName) ;
                 document.getElementById("ptoEgrowth").innerHTML = "P/E Growth: " + PeGs.toFixed(2);
 
 
@@ -309,6 +310,9 @@ function earnings_growth(data, pE){//function to calculate the Earnings growth o
       var year1 = [];
       var year2 =[];
       var growth=0;
+      console.log("HERE");
+      console.log(pE + " pe is:")
+      console.log(data);
       for(i=0; i<4; i++){
           year1.push(data['earnings'][i]['actualEPS']);
           year2.push(data['earnings'][i]['yearAgo']);
@@ -320,14 +324,22 @@ function earnings_growth(data, pE){//function to calculate the Earnings growth o
     for(x = 1;x<egr.length;x++) {
            pegs.push(((((egr[x-1]/egr[x])-1)*100)));
     }
+    console.log(pegs.toString());
 
 
-    for(i=0; i<pegs.length; i++){
+  /*  for(i=0; i<pegs.length; i++){
             pegs[i]= (pE/pegs[i]);
             growth+=pegs[i];
-        }
-        growth= growth/pegs.length;
-        return growth;
+            console.log(growth);
+
+    }*/
+            growth= ((egr[0]/egr[4])-1)*100;
+            growth= pE/growth;
+
+
+
+
+    return growth;
 }
 
 function financial_ratios(data){
@@ -361,25 +373,27 @@ function stats(data) {
 }
 
 function div_growth(name) {
-    console.log(name);
-    var gRowth;
+    var gRowth=0;
+    var dividendAmounts= [];
     var url = "https://api.iextrading.com/1.0/stock/" + name +  "/dividends/5y";
     $.getJSON(url, function (data){
+        console.log(data);
         for(i in data){
-            var l = i++;
-            gRowth +=(((data[i]['amount'])-(data[l]['amount']))/(data[l]['amount']));
-            console.log(gRowth);
-            if(i === data.length-1){
-                break;
+            dividendAmounts.push(data[i]['amount']);
             }
-        }
-        console.log(data.length);
-        console.log(gRowth);
+                console.log(dividendAmounts.length);
+        for(var x = 1;x<dividendAmounts.length; x++) {
+            gRowth += ((dividendAmounts[x-1]/dividendAmounts[x])-1);
 
 
-        if(data.length != 0){
-            gRowth= gRowth/data.length-1;
         }
+
+        gRowth=gRowth/(dividendAmounts.length-1);
+        if(gRowth!=null) {
+            document.getElementById("DivGrowth").innerHTML = "Dividend Growth: " + gRowth;
+        }
+
+
         return gRowth;
 
     })
