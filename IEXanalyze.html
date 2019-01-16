@@ -94,7 +94,7 @@ body {
 <div class="row">
   <div class="column side" style="background-color:#aaa;">
   	<p id="symbol">  </p>
-    <p id="company">  </p>
+      <p id="company">  </p>
     <p id="sector"> </p>
     <p id = "date"> </p>
     <p id="open_price" > </p>
@@ -197,7 +197,11 @@ function removeOptions(selectbox)
                 var finance = financial_ratios(data['financials']['financials']);
                 $.getJSON(fiveYrfinances, function (annualdata) {
                     var longTermfinance = financial_ratios(annualdata['financials']);
+                    var oneYrRev =(annualdata['financials'][0]['totalRevenue']-annualdata['financials'][1]['totalRevenue'])/(annualdata['financials'][1]['totalRevenue']);
+                    oneYrRev= oneYrRev*100;
+                    document.getElementById('1yrRev').innerHTML= "1 Year Rev. Growth: " + oneYrRev;
                     document.getElementById("5yrRev").innerHTML = "5 Year Rev. Growth: " + longTermfinance[3];        //$(".date").append(lastRefreshed);
+//          var revGrowth =((data[i]['totalRevenue']-data[data.length-1]['totalRevenue'])/(data[data.length-1]['totalRevenue']))*100;
 
                 });
 
@@ -221,7 +225,7 @@ function removeOptions(selectbox)
 
                 plot_graph(x_arr, myArray, symbol, vol);
 
-                document.getElementById('1yrRev').innerHTML= "1 Year Rev. Growth: " + finance[3];
+               // document.getElementById('1yrRev').innerHTML= "1 Year Rev. Growth: " + finance[3];
                 document.getElementById('GrossMarg').innerHTML= "Gross Margin: " + finance[0];
                 document.getElementById("NetMarg").innerHTML = "Net Margin: " + finance[1];
                 document.getElementById('DebtToEquity').innerHTML= "Debt To Equity: " + finance[2];
@@ -248,7 +252,8 @@ function removeOptions(selectbox)
           x: x_arr,
           y: y_arr,
           type: 'scatter',
-          connectgaps : true
+          connectgaps : true,
+
       };
 
       var layout = {
@@ -352,7 +357,8 @@ function financial_ratios(data){
         console.log(data);
           var grossMargin = (data[i]['grossProfit'] / data[i]['totalRevenue']);
           var netMargin = (data[i]['netIncome'] / data[i]['totalRevenue']);
-          var debtToEquity = (data[i]['totalLiabilities'] / data[i]['shareholderEquity']);
+          var debtToEquity = ((data[i]['totalDebt'])-(data[i]['currentDebt']));
+          debtToEquity= debtToEquity / data[i]['shareholderEquity'];
           var revGrowth =((data[i]['totalRevenue']-data[data.length-1]['totalRevenue'])/(data[data.length-1]['totalRevenue']))*100;
       //}
 
@@ -372,7 +378,8 @@ function stats(data) {
           data['dividendYield'],
           data['institutionPercent'],
           data['shortRatio'],
-          data['returnOnEquity']
+          data['returnOnEquity'],
+          data['marketcap']
       ])
 }
 
@@ -410,6 +417,12 @@ function div_growth(name) {
       }
   }
 
+
+
+
+
+
+
 </script>
 
 
@@ -420,7 +433,7 @@ function div_growth(name) {
         <header class="w3-container w3-teal w3-center w3-padding-32">
         <span onclick="document.getElementById('ticketModal').style.display='none'"
               class="w3-button w3-teal w3-xlarge w3-display-topright">×</span>
-            <h2 class="w3-wide"><i class="fa fa-suitcase w3-margin-right"></i>Our Recommendation!!</h2>
+            <h2 class="w3-wide"><i class=" w3-margin-right"></i>Our Recommendation!!</h2>
         </header>
         <div class="w3-container">
             <p><label><i class="fa fa-shopping-cart"></i> This Stock is a major BUY!!</label></p>
