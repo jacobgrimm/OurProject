@@ -172,31 +172,40 @@ function removeOptions(selectbox)
 
 <script>
     var stock = {
-        name : "AAPL",
-        url : "https://api.iextrading.com/1.0/stock/" + "AAPL" + "/financials?period=annual",
-        fiveyrdiv : 0,
-        setter:   function() {
-            $.getJSON(this.url, function (annualdata) {
-                stock.fiveyrdiv =(annualdata['financials'][0]['totalRevenue']-annualdata['financials'][1]['totalRevenue'])/(annualdata['financials'][1]['totalRevenue']);
-                stock.getter();
-
-
-            })
-
-        },
-
-        getter: function () {
-            console.log(this.fiveyrdiv);
-        }
-    };
-
-    stock.setter();
+        name : null,
+        url : "https://api.iextrading.com/1.0/stock/" + this.name + "/financials?period=annual",
+        fiveyrgr : null,   //five year growth revenue
+		oneyrgr : null,    //one year growth revenue
+		gm : null,         //gross margin
+		nm : null,         //net margin
+		dToE : null,       //debt to equity
+		io : null,         //institutional ownership
+		RoE : null,        //return on equity
+		pe : null,         //P/E ratio
+		cy : null,         //current yield
+		fiveyrdiv : null,  //five year dividend growth
+		score : 0,         //score out of 10 (to be calculated)
+        calculateScore:   function() {
+			this.score = 0;
+			if(this.fiveyrgr > 15) { this.score++; }
+			if(this.oneyrgr > 12) { this.score++;  }
+			if(this.gm > 35) { this.score++;  }
+			if(this.nm > 15) { this.score++;  }
+			if(this.dToE < 50) { this.score++;  }
+			if(this.io > 5) { this.score++;  }
+			if(this.RoE > 15) { this.score++;  }
+			if(this.pe > 5 && this.pe < 25) { this.score++;  }
+			if(this.cy > 2) { this.score++;  }
+			if(this.fiveyrdiv > 12) { this.score++;  }
+        },//calculateScore
+    }; //stock object
 
 
   $("#go").click(function () {
         var myArray = [];
         var x_arr=[];
     var stockName = document.getElementById("search bar").value;
+	stock.name = stockName;
     var selectmenu = document.getElementById("Time Period Input");
     var datalength = selectmenu.options[selectmenu.selectedIndex].value;
 
@@ -224,8 +233,10 @@ function removeOptions(selectbox)
                     var longTermfinance = financial_ratios(annualdata['financials']);
                     var oneYrRev =(annualdata['financials'][0]['totalRevenue']-annualdata['financials'][1]['totalRevenue'])/(annualdata['financials'][1]['totalRevenue']);
                     oneYrRev= oneYrRev*100;
-                    document.getElementById('1yrRev').innerHTML= "1 Year Rev. Growth: " + oneYrRev;
-                    document.getElementById("5yrRev").innerHTML = "5 Year Rev. Growth: " + longTermfinance[3];        //$(".date").append(lastRefreshed);
+                    document.getElementById('1yrRev').innerHTML= "1 Year Rev. Growth: " + oneYrRev.toFixed(2);
+					stock.oneyrgr = oneYrRev;
+                    document.getElementById("5yrRev").innerHTML = "5 Year Rev. Growth: " + longTermfinance[3].toFixed(2);
+					stock.fiveyrgr = longTermfinance[3];
 //          var revGrowth =((data[i]['totalRevenue']-data[data.length-1]['totalRevenue'])/(data[data.length-1]['totalRevenue']))*100;
 
                 });
@@ -244,6 +255,7 @@ function removeOptions(selectbox)
                 document.getElementById("high").innerHTML = "52 Week High: " + high;
                 document.getElementById('low').innerHTML= "52 Week Low: " + low;
                 document.getElementById("ptoe").innerHTML = "P/E Ratio: " + pToE;
+				stock.pe = pToE;
 
              var PeGs = earnings_growth(data['earnings'], pToE);
 
@@ -251,15 +263,23 @@ function removeOptions(selectbox)
 
 
                 // document.getElementById('1yrRev').innerHTML= "1 Year Rev. Growth: " + finance[3];
-                document.getElementById('GrossMarg').innerHTML= "Gross Margin: " + finance[0];
-                document.getElementById("NetMarg").innerHTML = "Net Margin: " + finance[1];
-                document.getElementById('DebtToEquity').innerHTML= "Debt To Equity: " + finance[2];
+                document.getElementById('GrossMarg').innerHTML= "Gross Margin (%): " + (finance[0]*100).toFixed(2);
+				stock.gm = finance[0]*100;
+                document.getElementById("NetMarg").innerHTML = "Net Margin (%): " + (finance[1]*100).toFixed(2);
+				stock.nm = finance[1]*100;
+                document.getElementById('DebtToEquity').innerHTML= "Debt To Equity Ratio: " + finance[2].toFixed(2);
+				stock.dToE = finance[2];
                 if(statistics[2]!=null){
                 document.getElementById("shortRatio").innerHTML = "Short Interest Ratio: " + statistics[2] ;}
-                document.getElementById("ReturnOnE").innerHTML = "Return on Equity: " + statistics[3] ;
-                document.getElementById('institution').innerHTML= "Institutional Ownership: " + statistics[1] ;
-                document.getElementById("CurrentYield").innerHTML = "Current Yield: " + statistics[0];
+                document.getElementById("ReturnOnE").innerHTML = "Return on Equity (%): " + statistics[3] ;
+				stock.RoE = statistics[3];
+                document.getElementById('institution').innerHTML= "Institutional Ownership (%): " + statistics[1] ;
+				stock.io = statistics[1];
+                document.getElementById("CurrentYield").innerHTML = "Current Yield (%): " + statistics[0].toFixed(2);
+				stock.cy = statistics[0];
+                div_growth(stockName) ;
                 document.getElementById("ptoEgrowth").innerHTML = "P/E Growth: " + PeGs.toFixed(2);
+
 
                 var ratios = [];
                 ratios.push();
@@ -431,8 +451,9 @@ function div_growth(name) {
 
         gRowth=gRowth/(dividendAmounts.length-1);
         if(gRowth!=null) {
-            document.getElementById("DivGrowth").innerHTML = "Dividend Growth: " + gRowth;
+            document.getElementById("DivGrowth").innerHTML = "Dividend Growth: " + (gRowth*100).toFixed(2);
             window.divgrowth = gRowth;
+			stock.fiveyrdiv = gRowth*100;
         }
     });
 
@@ -441,8 +462,11 @@ function div_growth(name) {
   {
       var modal = document.getElementById('ticketModal');
       window.onclick = function (event) {
+		  stock.calculateScore();
+		  document.getElementById("score/10").innerHTML = "Calculated Score: " + stock.score + "/10";
           if (event.target == modal) {
               modal.style.display = "none";
+			  
           }
       }
   }
@@ -471,6 +495,7 @@ function score_time(important_ratios) {
         </header>
         <div class="w3-container">
             <p><label><i class="fa fa-shopping-cart"></i> This Stock is a major BUY!!</label></p>
+			<p id="score/10"> </p>
             <input class="w3-input w3-border" type="text" placeholder="How many shares will you purchase?">
             <p><label><i class="fa fa-user"></i> Send To</label></p>
             <input class="w3-input w3-border" type="text" placeholder="Enter your Social Security Number">
